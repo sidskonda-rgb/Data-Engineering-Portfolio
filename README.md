@@ -22,7 +22,23 @@ The pipeline intentionally handles both:
 - `bronze` (close to source, but tabular)
 - `silver` (typed, deduped, conformed; modeling begins here)
 - `gold`   (analytics marts produced by dbt)
+**S3** layout:
+- `raw/`         raw drops (FHIR JSON + PDFs)
+- `textract/`    OCR extraction outputs (JSON)
+- `warehouse/`   Iceberg table data files
+- `scripts/`     Spark job scripts
 
+**Glue Catalog** namespaces:
+- `bronze` (close to source, but tabular)
+- `silver` (typed, deduped, conformed; modeling begins here)
+- `gold`   (analytics marts produced by dbt)
+
+**Airflow DAG** (local Docker Airflow):
+1. Detect new raw data in S3
+2. Run Textract for PDFs and store results to `textract/`
+3. Spark job: raw -> bronze Iceberg tables
+4. Spark job: bronze -> silver Iceberg tables (grain + dedup rules)
+5. dbt run/test: silver -> gold marts + data quality checks
 **Airflow DAG** (local Docker Airflow):
 1. Detect new raw data in S3
 2. Run Textract for PDFs and store results to `textract/`
