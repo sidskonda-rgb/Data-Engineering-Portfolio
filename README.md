@@ -1,74 +1,68 @@
-# Health Lakehouse Pipeline (AWS Glue + S3 + Athena)
+# Rackner-Style Lakehouse Pipeline (AWS + Airflow + Spark + dbt + Iceberg)
 
-This project builds an end-to-end, AWS-native data pipeline using production-level healthcare-style data, modeled analytics tables that are safe to rerun.
+This repo demonstrates an end-to-end “lakehouse” data engineering pipeline on AWS using the same core building blocks commonly used in federal data modernization work:
+- **Airflow** for orchestration
+- **Spark** for transformation
+- **Apache Iceberg** tables on **S3** (schema evolution + table semantics)
+- **AWS Glue Data Catalog** as the metastore
+- **dbt** for modeling + tests on top of curated tables
 
-The goal is to demonstrate:
-- raw data landing in S3
-- repeatable ETL with Glue PySpark
-- curated data modeling (facts/dims)
-- queryable gold outputs in Athena
-- basic data quality reporting
-
-## Dataset
-I use **Synthea** synthetic EHR exports in **FHIR JSON** format. The data is intentionally nested and inconsistent (optional fields, arrays, varying resource structures), which makes it a good stand-in for real-world clinical pipelines without PHI risk.
+The pipeline intentionally handles both:
+1) nested, messy semi-structured clinical-style JSON (FHIR-like)
+2) non-typical inputs (PDF/OCR) via **Amazon Textract** into queryable tables
 
 ## Architecture
-**S3** stores everything in a simple lake layout:
-- `raw/`     - immutable drops (FHIR bundles)
-- `bronze/`  - lightly structured tables (still close to source)
-- `silver/`  - conformed entities + deduped facts (model-ready)
-- `gold/`    - analytics outputs + data quality dashboard
+**S3** layout:
+- `raw/`         raw drops (FHIR JSON + PDFs)
+- `textract/`    OCR extraction outputs (JSON)
+- `warehouse/`   Iceberg table data files
+- `scripts/`     Spark job scripts
 
-**Glue** runs PySpark ETL jobs:
-1. `raw_to_bronze_synthea` extracts FHIR resources into bronze Parquet tables
-2. `bronze_to_silver_conform` models patient + encounter + observation into silver tables
+**Glue Catalog** namespaces:
+- `bronze` (close to source, but tabular)
+- `silver` (typed, deduped, conformed; modeling begins here)
+- `gold`   (analytics marts produced by dbt)
 
-**Athena** queries silver and materializes gold datasets using SQL.
+**Airflow DAG** (local Docker Airflow):
+1. Detect new raw data in S3
+2. Run Textract for PDFs and store results to `textract/`
+3. Spark job: raw -> bronze Iceberg tables
+4. Spark job: bronze -> silver Iceberg tables (grain + dedup rules)
+5. dbt run/test: silver -> gold marts + data quality checks
 
 ## Data Model (MVP)
-### Silver
-- `silver_dim_patient`
-  - Grain: 1 row per `patient_id` (SCD1 for MVP)
-- `silver_fct_encounter`
-  - Grain: 1 row per `encounter_id`
-  - Dedup: deterministic “latest wins” rule
-- `silver_fct_observation`
-  - Grain: `patient_id` + `obs_datetime` + `obs_code` (MVP)
+### Bronze (Iceberg)
+- `bronze_fhir_patient`
+- `bronze_fhir_encounter`
+- `bronze_fhir_observation`
+- `bronze_docs_text` (from Textract output; one row per document block)
 
-### Gold
-- `gold_population_summary`
-  - example population metrics by time bucket / category
-- `gold_data_quality_dashboard`
-  - row counts, null rates on keys, duplicates removed
+### Silver (Iceberg)
+- `silver_dim_patient` (grain: 1 row per patient_id)
+- `silver_fct_encounter` (grain: 1 row per encounter_id; dedup = latest ingested_at)
+- `silver_fct_observation` (grain: patient_id + obs_time + obs_code)
+- `silver_fct_doc_blocks` (normalized text blocks with confidence + provenance)
 
-## Design Decisions (why I did it this way)
-- I partition by `dt=YYYY-MM-DD` to keep reruns and backfills predictable.
-- Bronze stays “close to raw” so I can reprocess without losing evidence.
-- Silver is where I enforce grain + dedup rules so downstream queries don’t lie.
-- I kept the MVP to 3 core FHIR resources (Patient/Encounter/Observation) so the pipeline is complete end-to-end before expanding scope.
+### Gold (dbt)
+- `gold_patient_encounter_summary`
+- `gold_docs_quality`
+- (optional) prevalence / utilization marts
+
+## Why Iceberg
+Iceberg provides table semantics on S3:
+- schema evolution without breaking readers
+- partition evolution
+- snapshot-based reads (auditability / reproducibility)
 
 ## How to Run (High Level)
-1) Upload FHIR JSON bundles to:
-`s3://<bucket>/raw/synthea_fhir/dt=<YYYY-MM-DD>/`
+1. Upload raw data to:
+   - `s3://<bucket>/raw/fhir/dt=YYYY-MM-DD/`
+   - `s3://<bucket>/raw/docs/dt=YYYY-MM-DD/`
 
-2) Run Glue job:
-- `raw_to_bronze_synthea`
-Outputs:
-- `s3://<bucket>/bronze/patient/dt=<...>/`
-- `s3://<bucket>/bronze/encounter/dt=<...>/`
-- `s3://<bucket>/bronze/observation/dt=<...>/`
+2. Run the Airflow DAG (`airflow/dags/lakehouse_dag.py`), which:
+   - runs Textract for PDFs
+   - triggers Spark jobs to write Iceberg tables in Glue Catalog
+   - runs dbt models/tests
 
-3) Run Glue job:
-- `bronze_to_silver_conform`
-Outputs:
-- `s3://<bucket>/silver/...`
-
-4) Run Athena SQL in `src/sql/` to generate gold outputs.
-
-## Operational Notes / Debugging
-See `docs/runbook.md` for the first checks I do when a job fails (permissions, schema drift, missing partitions, and bad JSON records).
-
-## Future Enhancements
-- Add **Apache Iceberg** tables registered in Glue Catalog for schema evolution + time travel.
-- Add NPPES (NPI registry) as a second source for provider dimension modeling.
-- Orchestrate Glue + Athena runs with Airflow (MWAA or local Docker Airflow).
+## Operational Notes
+See `docs/runbook.md` for first checks (IAM/S3 perms, missing partitions, bad JSON, Textract job status, Glue job logs).
