@@ -26,9 +26,28 @@ wheels/
 *.egg
 
 # Airflow
-airflow.db
-airflow-webserver.pid
-webserver_config.py
+**/airflow.db
+**/airflow-webserver.pid
+**/webserver_config.py
+**/airflow.cfg
+**/logs
+
+#dbt
+**/target/
+**/dbt_packages/
+**//dbt_modules/
+**/dbt_logs/
+
+# Data (don't commit large files)
+data/raw/*.json
+data/raw/*.hl7
+data/raw/*.txt
+data/raw/*.csv
+data/processed/
+
+# Keep directory structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
 
 # IDE
 .vscode/
