@@ -1,0 +1,4 @@
+id,name,amount,transaction_date
+1,John Doe,100.50,2023-10-01
+2,,50.00,2023-10-02  <-- Missing Name (Null)
+3,Jane Smith,ABC,2023-10-03  <-- Wrong Type (String in Float column)
