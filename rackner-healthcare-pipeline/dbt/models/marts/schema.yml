@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: fct_patient_observations
+    description: "Patient clinical observations with demographics"
+    columns:
+      - name: observation_id
+        tests:
+          - unique
+          - not_null
+      - name: patient_id
+        tests:
+          - not_null

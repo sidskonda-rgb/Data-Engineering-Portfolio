@@ -1,0 +1,13 @@
+name: 'rackner_healthcare'
+version: '1.0.0'
+profile: 'rackner_healthcare'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+models:
+  rackner_healthcare:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

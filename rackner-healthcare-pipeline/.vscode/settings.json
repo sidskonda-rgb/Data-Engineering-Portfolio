@@ -1,0 +1,13 @@
+{
+    "python.defaultInterpreterPath": "./venv/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "black",
+    "python.linting.flake8Enabled": true,
+    "files associations": {
+        "*.sql": "sql",
+        "*.yml": "yaml",
+        "*.yaml": "yaml"
+    }
+}

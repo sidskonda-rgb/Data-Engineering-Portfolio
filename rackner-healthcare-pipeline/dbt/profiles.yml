@@ -1,0 +1,6 @@
+rackner_healthcare:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: '../data/processed/analytics.duckdb'

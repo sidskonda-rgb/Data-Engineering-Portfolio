@@ -1,85 +1,65 @@
-# Rackner-Style Lakehouse Pipeline (AWS + Airflow + Spark + dbt + Iceberg)
+# Fed Healthcare Data Pipeline - FHIR to Analytics
 
-This repo demonstrates an end-to-end “lakehouse” data engineering pipeline on AWS using the same core building blocks commonly used in federal data modernization work:
-- **Airflow** for orchestration
-- **Spark** for transformation
-- **Apache Iceberg** tables on **S3** (schema evolution + table semantics)
-- **AWS Glue Data Catalog** as the metastore
-- **dbt** for modeling + tests on top of curated tables
-
-The pipeline intentionally handles both:
-1) nested, messy semi-structured clinical-style JSON (FHIR-like)
-2) non-typical inputs (PDF/OCR) via **Amazon Textract** into queryable tables
+## Overview
+Production-grade ETL/ELT pipeline demonstrating healthcare data interoperability using FHIR standards, Spark transformations, and dbt modeling - aligned with federal health IT modernization practices.
 
 ## Architecture
-**S3** layout:
-- `raw/`         raw drops (FHIR JSON + PDFs)
-- `textract/`    OCR extraction outputs (JSON)
-- `warehouse/`   Iceberg table data files
-- `scripts/`     Spark job scripts
+```
+FHIR JSON (raw/) 
+  ↓ [Apache Airflow Orchestration]
+  ↓ [PySpark Transformation]
+Bronze Layer (Parquet)
+  ↓ [dbt Models + Tests]
+Analytics (Gold Layer)
+```
 
-**Glue Catalog** namespaces:
-- `bronze` (close to source, but tabular)
-- `silver` (typed, deduped, conformed; modeling begins here)
-- `gold`   (analytics marts produced by dbt)
-**S3** layout:
-- `raw/`         raw drops (FHIR JSON + PDFs)
-- `textract/`    OCR extraction outputs (JSON)
-- `warehouse/`   Iceberg table data files
-- `scripts/`     Spark job scripts
+## Tech Stack
+- **Orchestration**: Apache Airflow (DAG-based scheduling)
+- **Transform**: Apache Spark (distributed processing)
+- **Modeling**: dbt (version-controlled SQL transformations)
+- **Standards**: FHIR (healthcare interoperability)
+- **Storage**: Parquet (columnar format for analytics)
+- **Testing**: dbt data quality tests
 
-**Glue Catalog** namespaces:
-- `bronze` (close to source, but tabular)
-- `silver` (typed, deduped, conformed; modeling begins here)
-- `gold`   (analytics marts produced by dbt)
+## Data Pipeline
 
-**Airflow DAG** (local Docker Airflow):
-1. Detect new raw data in S3
-2. Run Textract for PDFs and store results to `textract/`
-3. Spark job: raw -> bronze Iceberg tables
-4. Spark job: bronze -> silver Iceberg tables (grain + dedup rules)
-5. dbt run/test: silver -> gold marts + data quality checks
-**Airflow DAG** (local Docker Airflow):
-1. Detect new raw data in S3
-2. Run Textract for PDFs and store results to `textract/`
-3. Spark job: raw -> bronze Iceberg tables
-4. Spark job: bronze -> silver Iceberg tables (grain + dedup rules)
-5. dbt run/test: silver -> gold marts + data quality checks
+### Ingestion (Bronze)
+- **Input**: FHIR Bundle JSON (Patients + Observations)
+- **Processing**: PySpark schema parsing and normalization
+- **Output**: Parquet tables with audit timestamps
 
-## Data Model (MVP)
-### Bronze (Iceberg)
-- `bronze_fhir_patient`
-- `bronze_fhir_encounter`
-- `bronze_fhir_observation`
-- `bronze_docs_text` (from Textract output; one row per document block)
+### Transformation (Silver → Gold)
+- **dbt staging models**: Clean, type, deduplicate
+- **dbt marts**: Join patients + observations for analytics
+- **Data quality**: Uniqueness, nullability, referential integrity tests
 
-### Silver (Iceberg)
-- `silver_dim_patient` (grain: 1 row per patient_id)
-- `silver_fct_encounter` (grain: 1 row per encounter_id; dedup = latest ingested_at)
-- `silver_fct_observation` (grain: patient_id + obs_time + obs_code)
-- `silver_fct_doc_blocks` (normalized text blocks with confidence + provenance)
+## Quick Start
+```bash
+# 1. Run Spark transformation
+cd spark/jobs && python transform_fhir_to_analytics.py
 
-### Gold (dbt)
-- `gold_patient_encounter_summary`
-- `gold_docs_quality`
-- (optional) prevalence / utilization marts
+# 2. Build dbt models
+cd dbt && dbt run && dbt test
 
-## Why Iceberg
-Iceberg provides table semantics on S3:
-- schema evolution without breaking readers
-- partition evolution
-- snapshot-based reads (auditability / reproducibility)
+# 3. Start Airflow (Docker)
+cd airflow && docker-compose up
+# Access UI: http://localhost:8080
+```
 
-## How to Run (High Level)
-1. Upload raw data to:
-   - `s3://<bucket>/raw/fhir/dt=YYYY-MM-DD/`
-   - `s3://<bucket>/raw/docs/dt=YYYY-MM-DD/`
+## Key Features Demonstrated
+✅ **Healthcare Standards**: FHIR resource parsing (Patient, Observation)  
+✅ **ETL/ELT Pattern**: Spark for heavy lifting, dbt for modeling  
+✅ **Data Governance**: Schema versioning, audit columns, data lineage  
+✅ **Orchestration**: Airflow DAG with retries and dependencies  
+✅ **Testing**: Automated data quality validation  
 
-2. Run the Airflow DAG (`airflow/dags/lakehouse_dag.py`), which:
-   - runs Textract for PDFs
-   - triggers Spark jobs to write Iceberg tables in Glue Catalog
-   - runs dbt models/tests
+## Military/Federal Relevance
+This pipeline architecture mirrors DoD/VA health IT modernization efforts:
+- FHIR interoperability (MHS GENESIS, VA EHRM)
+- Distributed processing for large-scale clinical data
+- Audit-ready data lineage and governance
+- Modular, version-controlled transformations
 
-## Operational Notes
-See `docs/runbook.md` for first checks (IAM/S3 perms, missing partitions, bad JSON, Textract job status, Glue job logs).
-
+## Author
+**Sri Konda** | Data Engineer | Active DoD Secret Clearance  
+[LinkedIn](#) | [Portfolio](#)
