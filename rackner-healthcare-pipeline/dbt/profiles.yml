@@ -1,6 +1,7 @@
 rackner_healthcare:
-  target: local
+  target: dev
   outputs:
-    local:
+    dev:
       type: duckdb
       path: '../data/processed/analytics.duckdb'
+      threads: 4

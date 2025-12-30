@@ -1,13 +1,41 @@
 version: 2
 
 models:
-  - name: fct_patient_observations
-    description: "Patient clinical observations with demographics"
+  - name: fct_observations
+    description: "Multi-source clinical observations fact table"
     columns:
-      - name: observation_id
+      - name: observation_key
+        description: "Unique identifier for each observation"
         tests:
           - unique
           - not_null
-      - name: patient_id
+      - name: value_numeric
+        description: "Numeric value of the observation"
         tests:
           - not_null
+      - name: source_system
+        description: "Origin system (FHIR_API, HL7_v2, OCR_PDF)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['FHIR_API', 'HL7_v2', 'OCR_PDF']
+
+  - name: fct_readiness
+    description: "Military deployment readiness fact table"
+    columns:
+      - name: soldier_id
+        description: "Unique soldier identifier"
+        tests:
+          - unique
+          - not_null
+      - name: readiness_flag
+        description: "Calculated readiness status"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['CLEARED', 'PHA_OVERDUE', 'MEDICAL_HOLD', 'DENTAL_HOLD']
+      - name: bmi_category
+        description: "BMI classification"
+        tests:
+          - accepted_values:
+              values: ['UNDERWEIGHT', 'NORMAL', 'OVERWEIGHT', 'OBESE']
