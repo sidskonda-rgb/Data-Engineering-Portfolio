@@ -39,3 +39,14 @@ webserver_config.py
 # OS
 .DS_Store
 Thumbs.db
+
+# dbt
+dbt/target/
+dbt/logs/
+dbt/.user.yml
+*.duckdb
+*.duckdb.wal
+
+# Data artifacts
+data/processed/
+nul
