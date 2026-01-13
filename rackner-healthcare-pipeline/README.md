@@ -47,11 +47,11 @@ cd airflow && docker-compose up
 ```
 
 ## Key Features Demonstrated
-✅ **Healthcare Standards**: FHIR resource parsing (Patient, Observation)  
-✅ **ETL/ELT Pattern**: Spark for heavy lifting, dbt for modeling  
-✅ **Data Governance**: Schema versioning, audit columns, data lineage  
-✅ **Orchestration**: Airflow DAG with retries and dependencies  
-✅ **Testing**: Automated data quality validation  
+**Healthcare Standards**: FHIR resource parsing (Patient, Observation)  
+**ETL/ELT Pattern**: Spark for heavy lifting, dbt for modeling  
+**Data Governance**: Schema versioning, audit columns, data lineage  
+**Orchestration**: Airflow DAG with retries and dependencies  
+**Testing**: Automated data quality validation  
 
 ## Military/Federal Relevance
 This pipeline architecture mirrors DoD/VA health IT modernization efforts:
