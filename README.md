@@ -1,8 +1,6 @@
-# Data Engineering Portfolio
+## About Me
 
-**Active DoD Secret Clearance** | End-to-end pipelines for analytics and decision support
-
-Data engineer focused on building reliable pipelines that transform raw data into analytics-ready datasets. Three years of experience across healthcare, defense, and enterprise domains. Currently serving as IT Specialist, U.S. Army Reserves.
+Data engineer focused on building reliable pipelines that transform raw data into analytics-ready datasets. Three years of experience across healthcare and mid-market domains. Currently serving as IT Specialist, U.S. Army Reserves.
 
 ## Portfolio Projects
 
@@ -11,7 +9,7 @@ Data engineer focused on building reliable pipelines that transform raw data int
 **Solution**: Multi-format ETL pipeline with Apache Spark and dbt to normalize diverse healthcare data into Parquet format optimized for analytical queries
 **Impact**: Demonstrates ability to handle real-world data complexity and deliver analytics-ready datasets
 
-*Technologies: Apache Spark, dbt, Parquet, Python*
+*Tools: Apache Spark, dbt, Parquet, Spark*
 
 ### [Additional projects to be added]
 
@@ -40,7 +38,6 @@ Data engineer focused on building reliable pipelines that transform raw data int
 
 ## Professional Context
 
-**Clearance**: Active DoD Secret  
 **Focus Areas**: Healthcare data engineering, defense sector analytics, secure data infrastructure  
 **Current Role**: Solutions Engineer at Boolean Data Systems | IT Specialist, U.S. Army Reserves
 
