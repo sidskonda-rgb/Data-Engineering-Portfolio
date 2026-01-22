@@ -1,0 +1,40 @@
+# Core
+python-dotenv>=1.0.0
+pyyaml>=6.0
+
+# API & Data Ingestion
+requests>=2.31.0
+pandas>=2.0.0
+httpx>=0.25.0
+
+# Database
+psycopg2-binary>=2.9.9
+sqlalchemy>=2.0.0
+
+# Streaming
+kafka-python>=2.0.2
+confluent-kafka>=2.3.0
+
+# Transformation
+dbt-core>=1.7.0
+dbt-postgres>=1.7.0
+
+# Orchestration
+prefect>=2.14.0
+
+# Data Quality
+great-expectations>=0.18.0
+
+# Dashboard
+streamlit>=1.29.0
+plotly>=5.18.0
+altair>=5.2.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Utilities
+tqdm>=4.66.0
+loguru>=0.7.2
+pyarrow>=14.0.0
