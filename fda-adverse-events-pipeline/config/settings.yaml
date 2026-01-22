@@ -1,0 +1,92 @@
+# FDA Adverse Events Pipeline Configuration
+
+# API Settings
+api:
+  base_url: "https://api.fda.gov/drug/event.json"
+  rate_limit_per_minute: 240
+  max_retries: 3
+  retry_delay_seconds: 5
+  timeout_seconds: 30
+  default_limit: 100
+  max_limit: 1000
+
+# Ingestion Settings
+ingestion:
+  batch_size: 1000
+  lookback_days: 30
+  incremental_field: "receivedate"
+  checkpoint_enabled: true
+  checkpoint_path: "data/checkpoints/"
+
+# Late-Arriving Event Handling
+late_events:
+  # Maximum allowed delay between occurdate and receivedate
+  max_delay_days: 365
+  # Watermark for event-time processing
+  watermark_delay_minutes: 60
+  # Backfill window for reprocessing
+  backfill_window_days: 7
+
+# Bronze Layer
+bronze:
+  schema: "bronze"
+  tables:
+    - raw_adverse_events
+    - raw_drugs
+    - raw_reactions
+    - raw_patients
+  retention_days: 90
+
+# Silver Layer
+silver:
+  schema: "silver"
+  tables:
+    - clean_events
+    - clean_drugs
+    - clean_reactions
+    - clean_patients
+  deduplication:
+    key_field: "safetyreportid"
+    strategy: "latest"  # latest, first, or merge
+
+# Gold Layer
+gold:
+  schema: "gold"
+  tables:
+    - daily_kpis
+    - drug_trends
+    - geo_hotspots
+    - severity_metrics
+    - top_reactions
+  aggregation_windows:
+    - daily
+    - weekly
+    - monthly
+
+# Data Quality Thresholds
+data_quality:
+  null_threshold_percent: 10
+  duplicate_threshold_percent: 1
+  row_count_variance_percent: 50
+  freshness_sla_hours: 24
+
+# Orchestration
+orchestration:
+  schedule: "0 6 * * *"  # Daily at 6 AM
+  max_concurrent_tasks: 4
+  retry_attempts: 3
+  timeout_minutes: 60
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/pipeline.log"
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+
+# Dashboard
+dashboard:
+  title: "FDA Adverse Events Analytics"
+  refresh_interval_seconds: 300
+  default_date_range_days: 30
